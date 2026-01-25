@@ -1,0 +1,128 @@
+// Looptrading Prisma Schema
+// Version 1.0 - Story 1.2
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Stock {
+  symbol    String   @id
+  name      String
+  market    String
+  sector    String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  data      StockData[]
+  positions Position[]
+  watchlist WatchlistItem[]
+  alerts    Alert[]
+
+  @@index([market, active])
+}
+
+model StockData {
+  id        String   @id @default(cuid())
+  symbol    String
+  date      DateTime
+
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    Float
+
+  sma20     Float?
+  sma50     Float?
+  sma200    Float?
+  ema9      Float?
+  ema21     Float?
+  rsi14     Float?
+  macdLine  Float?
+  macdSignal Float?
+  macdHist  Float?
+  bbUpper   Float?
+  bbMiddle  Float?
+  bbLower   Float?
+  obv       Float?
+  avgVol20  Float?
+  score     Int?
+
+  updatedAt DateTime @updatedAt
+  stock     Stock    @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+
+  @@unique([symbol, date])
+  @@index([symbol, date])
+}
+
+model Position {
+  id           String   @id @default(cuid())
+  symbol       String
+  quantity     Float
+  avgCost      Float
+  dateAcquired DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stock        Stock    @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+}
+
+model WatchlistItem {
+  id              String   @id @default(cuid())
+  symbol          String   @unique
+  order           Int      @default(0)
+  targetPriceHigh Float?
+  targetPriceLow  Float?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  stock           Stock    @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+}
+
+model AlertRule {
+  id        String   @id @default(cuid())
+  strategy  String   @unique
+  params    String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Alert {
+  id            String   @id @default(cuid())
+  symbol        String
+  strategy      String
+  score         Int?
+  message       String
+  triggeredAt   DateTime @default(now())
+  acknowledged  Boolean  @default(false)
+  acknowledgedAt DateTime?
+
+  stock         Stock    @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+
+  @@index([symbol, strategy, triggeredAt])
+  @@index([acknowledged])
+}
+
+model UserSettings {
+  id                 String  @id @default("default")
+  strategyPullback   Boolean @default(true)
+  strategyBreakout   Boolean @default(true)
+  strategyMacdCross  Boolean @default(true)
+  minScoreAlert      Int     @default(75)
+  emailEnabled       Boolean @default(false)
+  emailAddress       String?
+  pushEnabled        Boolean @default(true)
+  quietHoursEnabled  Boolean @default(false)
+  quietHoursStart    String?
+  quietHoursEnd      String?
+  updatedAt          DateTime @updatedAt
+}

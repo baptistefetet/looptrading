@@ -12,7 +12,7 @@
 | 2. PRD | `docs/prd.md` | Done |
 | 3. Architecture | `docs/architecture.md` | Done (v3.0 - simplified) |
 | 4. Stories | `docs/stories/` | Done (25 stories, updated for v3.0) |
-| 5. Implementation | - | **In Progress** (Story 1.1 done) |
+| 5. Implementation | - | **In Progress** (Stories 1.1, 1.2 done) |
 
 ## Architecture v3.0 - Simplification Maximale
 
@@ -76,7 +76,8 @@ looptrading/
 3. ~~Architecture v3.0~~ - Done
 4. ~~Stories update~~ - Done
 5. ~~Story 1.1: Project Init~~ - Done
-6. **Next:** Story 1.2: Database Setup (Prisma + SQLite)
+6. ~~Story 1.2: Database Setup~~ - Done
+7. **Next:** Story 1.3: API Skeleton (Fastify routes)
 
 ## Commands
 
@@ -85,6 +86,12 @@ pnpm dev       # Watch mode (rebuild client + restart server on changes)
 pnpm build     # Build client + server → dist/
 pnpm start     # Start server (port 3000)
 pnpm test      # Vitest
+
+# Database
+pnpm db:generate  # Generate Prisma client
+pnpm db:migrate   # Run migrations
+pnpm db:seed      # Seed database
+pnpm db:reset     # Reset database (warning: deletes all data)
 ```
 
 ## Key Files
