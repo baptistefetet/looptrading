@@ -118,4 +118,5 @@ pnpm db:reset     # Reset database (warning: deletes all data)
 **A la fin de chaque story:**
 1. Mettre à jour le status de la story (`Done`) et cocher les tasks
 2. Mettre à jour `CLAUDE.md` (Next Steps)
-3. Commit et push sur GitHub
+3. Commit avec message descriptif
+4. **Push sur GitHub** (`git push origin main`)
