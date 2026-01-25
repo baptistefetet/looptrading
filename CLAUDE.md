@@ -12,7 +12,7 @@
 | 2. PRD | `docs/prd.md` | Done |
 | 3. Architecture | `docs/architecture.md` | Done (v3.0 - simplified) |
 | 4. Stories | `docs/stories/` | Done (25 stories, updated for v3.0) |
-| 5. Implementation | - | **In Progress** (Stories 1.1, 1.2, 1.3 done) |
+| 5. Implementation | - | **In Progress** (Stories 1.1, 1.2, 1.3, 1.4 done) |
 
 ## Architecture v3.0 - Simplification Maximale
 
@@ -78,7 +78,8 @@ looptrading/
 5. ~~Story 1.1: Project Init~~ - Done
 6. ~~Story 1.2: Database Setup~~ - Done
 7. ~~Story 1.3: API Skeleton~~ - Done
-8. **Next:** Story 1.4: Frontend Shell (React + TailwindCSS)
+8. ~~Story 1.4: Frontend Shell~~ - Done
+9. **Next:** Story 1.5: Scheduler Setup (node-cron)
 
 ## Commands
 
