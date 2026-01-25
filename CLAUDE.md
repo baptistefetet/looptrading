@@ -12,7 +12,7 @@
 | 2. PRD | `docs/prd.md` | Done |
 | 3. Architecture | `docs/architecture.md` | Done (v3.0 - simplified) |
 | 4. Stories | `docs/stories/` | Done (25 stories, updated for v3.0) |
-| 5. Implementation | - | **In Progress** (Stories 1.1, 1.2 done) |
+| 5. Implementation | - | **In Progress** (Stories 1.1, 1.2, 1.3 done) |
 
 ## Architecture v3.0 - Simplification Maximale
 
@@ -77,7 +77,8 @@ looptrading/
 4. ~~Stories update~~ - Done
 5. ~~Story 1.1: Project Init~~ - Done
 6. ~~Story 1.2: Database Setup~~ - Done
-7. **Next:** Story 1.3: API Skeleton (Fastify routes)
+7. ~~Story 1.3: API Skeleton~~ - Done
+8. **Next:** Story 1.4: Frontend Shell (React + TailwindCSS)
 
 ## Commands
 
@@ -110,3 +111,10 @@ pnpm db:reset     # Reset database (warning: deletes all data)
 | `/architect` | Architecture decisions, tech stack |
 | `/po` | Story validation, PRD updates |
 | `/dev` | Implementation guidance |
+
+## Workflow
+
+**A la fin de chaque story:**
+1. Mettre à jour le status de la story (`Done`) et cocher les tasks
+2. Mettre à jour `CLAUDE.md` (Next Steps)
+3. Commit et push sur GitHub

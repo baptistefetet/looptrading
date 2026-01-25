@@ -1,19 +1,24 @@
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
+import {
+  serializerCompiler,
+  validatorCompiler,
+} from 'fastify-type-provider-zod';
 import path from 'path';
+import { loggerConfig } from './config/logger.js';
+import { registerRoutes } from './routes/index.js';
 
 export async function buildApp() {
   const app = Fastify({
-    logger: true,
+    logger: loggerConfig,
   });
 
-  // Health check
-  app.get('/api/health', async () => {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-    };
-  });
+  // Zod type provider
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
+  // Register API routes
+  await app.register(registerRoutes);
 
   // Serve React build (always - same behavior in dev and prod)
   await app.register(fastifyStatic, {
