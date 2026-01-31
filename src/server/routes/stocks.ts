@@ -4,6 +4,7 @@ import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { marketDataService } from '../services/MarketDataService.js';
 import type { HistoryPeriod } from '../services/MarketDataService.js';
 import { indicatorService } from '../services/IndicatorService.js';
+import { scoringService } from '../services/ScoringService.js';
 
 const symbolParams = z.object({
   symbol: z.string().min(1).max(20),
@@ -66,6 +67,43 @@ export const stocksRoutes: FastifyPluginAsync = async (fastify) => {
           error: {
             code: 'MARKET_DATA_ERROR',
             message: `Failed to fetch history for ${symbol.toUpperCase()}`,
+          },
+        });
+      }
+    }
+  );
+
+  // GET /api/stocks/:symbol/score
+  app.get(
+    '/api/stocks/:symbol/score',
+    {
+      schema: {
+        params: symbolParams,
+      },
+    },
+    async (request, reply) => {
+      const { symbol } = request.params;
+
+      try {
+        const result = await scoringService.calculateScore(symbol);
+
+        if (!result) {
+          return reply.code(404).send({
+            error: {
+              code: 'NO_DATA',
+              message: `No data found for ${symbol.toUpperCase()}`,
+            },
+          });
+        }
+
+        return reply.send({ data: result });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        request.log.error({ symbol, error: message }, 'Failed to calculate score');
+        return reply.code(500).send({
+          error: {
+            code: 'SCORING_ERROR',
+            message: `Failed to calculate score for ${symbol.toUpperCase()}`,
           },
         });
       }
