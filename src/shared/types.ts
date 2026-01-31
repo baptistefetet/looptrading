@@ -185,6 +185,23 @@ export interface PortfolioSummary {
 }
 
 // ============================================
+// News
+// ============================================
+export interface NewsItem {
+  title: string;
+  link: string;
+  publisher: string;
+  publishedAt: string;
+  thumbnail?: string;
+}
+
+export interface NewsResponse {
+  symbol?: string;
+  news: NewsItem[];
+  fetchedAt: string;
+}
+
+// ============================================
 // Screener Filters
 // ============================================
 export interface ScreenerFilters {
