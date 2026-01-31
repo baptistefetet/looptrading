@@ -22,16 +22,23 @@ export const healthRoutes: FastifyPluginAsync = async (fastify) => {
         },
       },
     },
-    async () => {
-      return {
+    async (_request, reply) => {
+      const jobs = fastify.scheduler.getStatus();
+      const lastRun = jobs
+        .map((j) => j.lastRun)
+        .filter(Boolean)
+        .sort()
+        .pop() ?? null;
+
+      return reply.send({
         status: 'ok' as const,
         timestamp: new Date().toISOString(),
         version: '0.1.0',
         scheduler: {
-          running: false,
-          lastRun: null,
+          running: fastify.scheduler.isRunning(),
+          lastRun,
         },
-      };
+      });
     }
   );
 };

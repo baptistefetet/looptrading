@@ -7,6 +7,14 @@ import {
 import path from 'path';
 import { loggerConfig } from './config/logger.js';
 import { registerRoutes } from './routes/index.js';
+import { SchedulerService } from './services/SchedulerService.js';
+import { registerHeartbeatJob } from './services/jobs/heartbeat.js';
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    scheduler: SchedulerService;
+  }
+}
 
 export async function buildApp() {
   const app = Fastify({
@@ -16,6 +24,11 @@ export async function buildApp() {
   // Zod type provider
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  // Scheduler
+  const scheduler = new SchedulerService(app.log);
+  registerHeartbeatJob(scheduler);
+  app.decorate('scheduler', scheduler);
 
   // Register API routes
   await app.register(registerRoutes);
