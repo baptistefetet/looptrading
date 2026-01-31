@@ -164,6 +164,27 @@ export interface ApiError {
 }
 
 // ============================================
+// Position with P&L (computed)
+// ============================================
+export interface PositionWithPnL extends Position {
+  currentPrice: number;
+  marketValue: number;
+  unrealizedPnL: number;
+  unrealizedPnLPercent: number;
+}
+
+// ============================================
+// Portfolio Summary
+// ============================================
+export interface PortfolioSummary {
+  positions: PositionWithPnL[];
+  totalValue: number;
+  totalCost: number;
+  totalPnL: number;
+  totalPnLPercent: number;
+}
+
+// ============================================
 // Screener Filters
 // ============================================
 export interface ScreenerFilters {

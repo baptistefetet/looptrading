@@ -12,7 +12,7 @@
 | 2. PRD | `docs/prd.md` | Done |
 | 3. Architecture | `docs/architecture.md` | Done (v3.0 - simplified) |
 | 4. Stories | `docs/stories/` | Done (25 stories, updated for v3.0) |
-| 5. Implementation | - | **In Progress** (Stories 1.1–1.5 done) |
+| 5. Implementation | - | **In Progress** (Stories 1.1–1.5, 2.1 done) |
 
 ## Architecture v3.0 - Simplification Maximale
 
@@ -80,7 +80,8 @@ looptrading/
 7. ~~Story 1.3: API Skeleton~~ - Done
 8. ~~Story 1.4: Frontend Shell~~ - Done
 9. ~~Story 1.5: Scheduler Setup~~ - Done
-10. **Next:** Story 2.1: Portfolio Management
+10. ~~Story 2.1: Portfolio Management~~ - Done
+11. **Next:** Story 2.2: Portfolio Import
 
 ## Commands
 
