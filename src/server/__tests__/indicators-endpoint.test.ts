@@ -95,7 +95,7 @@ describe('GET /api/stocks/:symbol/indicators', () => {
   });
 
   it('should compute and return SMA/EMA indicators with sufficient data', async () => {
-    // Insert 60 data points (enough for SMA50 + EMA21)
+    // Insert 60 data points (enough for SMA50 + EMA21 + MACD + all momentum)
     const rows = generateStockData('AAPL', 60);
     await prisma.stockData.createMany({ data: rows });
 
@@ -109,17 +109,34 @@ describe('GET /api/stocks/:symbol/indicators', () => {
     const data = body.data;
 
     expect(data.symbol).toBe('AAPL');
+    // Trend
     expect(data.sma20).toBeTypeOf('number');
     expect(data.sma50).toBeTypeOf('number');
     expect(data.sma200).toBeNull(); // only 60 data points
     expect(data.ema9).toBeTypeOf('number');
     expect(data.ema21).toBeTypeOf('number');
+    // Momentum
+    expect(data.rsi14).toBeTypeOf('number');
+    expect(data.rsi14).toBeGreaterThanOrEqual(0);
+    expect(data.rsi14).toBeLessThanOrEqual(100);
+    expect(data.macdLine).toBeTypeOf('number');
+    expect(data.macdSignal).toBeTypeOf('number');
+    expect(data.macdHist).toBeTypeOf('number');
+    // Volatility
+    expect(data.bbUpper).toBeTypeOf('number');
+    expect(data.bbMiddle).toBeTypeOf('number');
+    expect(data.bbLower).toBeTypeOf('number');
+    expect(data.bbUpper).toBeGreaterThan(data.bbMiddle);
+    expect(data.bbLower).toBeLessThan(data.bbMiddle);
+    // Volume
+    expect(data.obv).toBeTypeOf('number');
+    expect(data.avgVol20).toBeTypeOf('number');
     expect(data.date).toBeDefined();
     expect(data.calculatedAt).toBeDefined();
   });
 
-  it('should persist indicators to the database after recompute', async () => {
-    const rows = generateStockData('AAPL', 25);
+  it('should persist all indicators to the database after recompute', async () => {
+    const rows = generateStockData('AAPL', 60);
     await prisma.stockData.createMany({ data: rows });
 
     // Recompute
@@ -128,7 +145,7 @@ describe('GET /api/stocks/:symbol/indicators', () => {
       url: '/api/stocks/AAPL/indicators?recompute=true',
     });
 
-    // Read from DB: the last row should have SMA20 set
+    // Read from DB: the last row should have all indicators set
     const lastRow = await prisma.stockData.findFirst({
       where: { symbol: 'AAPL' },
       orderBy: { date: 'desc' },
@@ -138,6 +155,15 @@ describe('GET /api/stocks/:symbol/indicators', () => {
     expect(lastRow!.sma20).toBeTypeOf('number');
     expect(lastRow!.ema9).toBeTypeOf('number');
     expect(lastRow!.ema21).toBeTypeOf('number');
+    expect(lastRow!.rsi14).toBeTypeOf('number');
+    expect(lastRow!.macdLine).toBeTypeOf('number');
+    expect(lastRow!.macdSignal).toBeTypeOf('number');
+    expect(lastRow!.macdHist).toBeTypeOf('number');
+    expect(lastRow!.bbUpper).toBeTypeOf('number');
+    expect(lastRow!.bbMiddle).toBeTypeOf('number');
+    expect(lastRow!.bbLower).toBeTypeOf('number');
+    expect(lastRow!.obv).toBeTypeOf('number');
+    expect(lastRow!.avgVol20).toBeTypeOf('number');
   });
 
   it('should return stored indicators without recompute by default', async () => {
