@@ -202,6 +202,42 @@ export interface NewsResponse {
 }
 
 // ============================================
+// Market Data (Quote & History)
+// ============================================
+export interface StockQuote {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  high: number;
+  low: number;
+  open: number;
+  previousClose: number;
+  currency: string;
+  marketState: string;
+  name: string;
+  exchange: string;
+  fetchedAt: string;
+}
+
+export interface OHLCVBar {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface StockHistory {
+  symbol: string;
+  period: string;
+  bars: OHLCVBar[];
+  fetchedAt: string;
+}
+
+// ============================================
 // Screener Filters
 // ============================================
 export interface ScreenerFilters {

@@ -12,7 +12,7 @@
 | 2. PRD | `docs/prd.md` | Done |
 | 3. Architecture | `docs/architecture.md` | Done (v3.0 - simplified) |
 | 4. Stories | `docs/stories/` | Done (25 stories, updated for v3.0) |
-| 5. Implementation | - | **In Progress** (Stories 1.1–1.5, 2.1, 2.3 done) |
+| 5. Implementation | - | **In Progress** (Stories 1.1–1.5, 2.1, 2.3, 3.1 done) |
 
 ## Architecture v3.0 - Simplification Maximale
 
@@ -83,7 +83,8 @@ looptrading/
 10. ~~Story 2.1: Portfolio Management~~ - Done
 11. ~~Story 2.2: Portfolio Import~~ - Supprimée
 12. ~~Story 2.3: Yahoo News~~ - Done
-13. **Next:** Story 3.1: Market Data Service
+13. ~~Story 3.1: Market Data Service~~ - Done
+14. **Next:** Story 3.2: Trend Indicators
 
 ## Commands
 
