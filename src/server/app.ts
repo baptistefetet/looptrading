@@ -9,6 +9,7 @@ import { loggerConfig } from './config/logger.js';
 import { registerRoutes } from './routes/index.js';
 import { SchedulerService } from './services/SchedulerService.js';
 import { registerHeartbeatJob } from './services/jobs/heartbeat.js';
+import { registerUpdateMarketDataJob } from './services/jobs/updateMarketData.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -28,6 +29,7 @@ export async function buildApp() {
   // Scheduler
   const scheduler = new SchedulerService(app.log);
   registerHeartbeatJob(scheduler);
+  registerUpdateMarketDataJob(scheduler, app.log);
   app.decorate('scheduler', scheduler);
 
   // Register API routes
