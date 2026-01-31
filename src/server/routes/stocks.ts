@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { marketDataService } from '../services/MarketDataService.js';
 import type { HistoryPeriod } from '../services/MarketDataService.js';
+import { indicatorService } from '../services/IndicatorService.js';
 
 const symbolParams = z.object({
   symbol: z.string().min(1).max(20),
@@ -65,6 +66,52 @@ export const stocksRoutes: FastifyPluginAsync = async (fastify) => {
           error: {
             code: 'MARKET_DATA_ERROR',
             message: `Failed to fetch history for ${symbol.toUpperCase()}`,
+          },
+        });
+      }
+    }
+  );
+
+  // GET /api/stocks/:symbol/indicators
+  app.get(
+    '/api/stocks/:symbol/indicators',
+    {
+      schema: {
+        params: symbolParams,
+        querystring: z.object({
+          recompute: z.enum(['true', 'false']).default('false'),
+        }),
+      },
+    },
+    async (request, reply) => {
+      const { symbol } = request.params;
+      const recompute = request.query.recompute === 'true';
+
+      try {
+        let indicators;
+        if (recompute) {
+          indicators = await indicatorService.computeIndicators(symbol);
+        } else {
+          indicators = await indicatorService.getIndicators(symbol);
+        }
+
+        if (!indicators) {
+          return reply.code(404).send({
+            error: {
+              code: 'NO_DATA',
+              message: `No data found for ${symbol.toUpperCase()}`,
+            },
+          });
+        }
+
+        return reply.send({ data: indicators });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        request.log.error({ symbol, error: message }, 'Failed to get indicators');
+        return reply.code(500).send({
+          error: {
+            code: 'INDICATOR_ERROR',
+            message: `Failed to compute indicators for ${symbol.toUpperCase()}`,
           },
         });
       }
