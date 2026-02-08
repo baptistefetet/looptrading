@@ -157,6 +157,71 @@ describe('Universe endpoints', () => {
   });
 
   // ============================================
+  // GET /api/stocks/yahoo-search
+  // ============================================
+
+  describe('GET /api/stocks/yahoo-search', () => {
+    it('should return yahoo search results and universe flags', async () => {
+      const yahooFinance = (await import('yahoo-finance2')).default;
+      vi.mocked(yahooFinance.search).mockResolvedValueOnce({
+        quotes: [
+          {
+            symbol: 'AAPL',
+            shortname: 'Apple Inc.',
+            exchange: 'NMS',
+            quoteType: 'EQUITY',
+          },
+          {
+            symbol: 'ASML.AS',
+            shortname: 'ASML Holding N.V.',
+            exchange: 'AMS',
+            quoteType: 'EQUITY',
+          },
+        ],
+      } as never);
+
+      await prisma.stock.create({
+        data: { symbol: 'AAPL', name: 'Apple Inc.', market: 'US', active: true },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/stocks/yahoo-search?q=apple',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data).toHaveLength(2);
+      expect(body.data[0].symbol).toBe('AAPL');
+      expect(body.data[0].inUniverse).toBe(true);
+      expect(body.data[0].active).toBe(true);
+      expect(body.data[1].symbol).toBe('ASML.AS');
+      expect(body.data[1].market).toBe('EU');
+      expect(body.data[1].inUniverse).toBe(false);
+    });
+
+    it('falls back to local universe and direct quote when yahoo search fails', async () => {
+      const yahooFinance = (await import('yahoo-finance2')).default;
+      vi.mocked(yahooFinance.search).mockRejectedValueOnce(new Error('search unavailable'));
+
+      await prisma.stock.create({
+        data: { symbol: 'MSFT', name: 'Microsoft Corp.', market: 'US', active: true },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/stocks/yahoo-search?q=MSFT',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data.length).toBeGreaterThan(0);
+      expect(body.data.some((item: { symbol: string }) => item.symbol === 'MSFT')).toBe(true);
+    });
+  });
+
+  // ============================================
   // POST /api/stocks
   // ============================================
 

@@ -21,6 +21,20 @@ interface UniverseResponse {
   };
 }
 
+interface YahooSearchItem {
+  symbol: string;
+  name: string;
+  market: 'US' | 'EU';
+  exchange: string | null;
+  type: string | null;
+  inUniverse: boolean;
+  active: boolean | null;
+}
+
+interface YahooSearchResponse {
+  data: YahooSearchItem[];
+}
+
 interface WatchlistResponse {
   data: WatchlistRow[];
 }
@@ -48,6 +62,7 @@ export function Universe() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
+  const [yahooSearch, setYahooSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('true');
   const [marketFilter, setMarketFilter] = useState<MarketFilter>('ALL');
   const [pageIndex, setPageIndex] = useState(0);
@@ -81,6 +96,15 @@ export function Universe() {
     queryKey: ['universe', params],
     queryFn: () => api.get<UniverseResponse>(`/stocks?${params}`),
     placeholderData: (previous) => previous,
+  });
+
+  const yahooSearchQuery = useQuery({
+    queryKey: ['universe', 'yahoo-search', yahooSearch],
+    queryFn: () =>
+      api.get<YahooSearchResponse>(
+        `/stocks/yahoo-search?q=${encodeURIComponent(yahooSearch.trim())}&limit=10`,
+      ),
+    enabled: yahooSearch.trim().length > 0,
   });
 
   const watchlistQuery = useQuery({
@@ -280,6 +304,67 @@ export function Universe() {
           <option value="all">Active + inactive</option>
           <option value="false">Inactive only</option>
         </select>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-dark-600 bg-dark-800/90 p-4">
+        <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Yahoo Finance Search</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <input
+            value={yahooSearch}
+            onChange={(event) => setYahooSearch(event.target.value)}
+            placeholder="Search on Yahoo (ex: Palantir, PLTR, ASML...)"
+            className="w-80 rounded border border-dark-600 bg-dark-900 px-3 py-2 text-sm text-gray-100 focus:border-neon-green focus:outline-none"
+          />
+        </div>
+
+        {yahooSearchQuery.isLoading && (
+          <p className="mt-3 text-sm text-gray-500">Searching Yahoo...</p>
+        )}
+        {yahooSearchQuery.error && (
+          <p className="mt-3 text-sm text-red-400">
+            Yahoo search failed: {yahooSearchQuery.error.message}
+          </p>
+        )}
+        {!yahooSearchQuery.isLoading &&
+          !yahooSearchQuery.error &&
+          yahooSearch.trim().length > 0 && (
+            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+              {(yahooSearchQuery.data?.data ?? []).length === 0 && (
+                <p className="text-sm text-gray-500">No Yahoo symbol match.</p>
+              )}
+              {(yahooSearchQuery.data?.data ?? []).map((item) => (
+                <div
+                  key={`${item.symbol}-${item.exchange ?? 'na'}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded border border-dark-600 bg-dark-900/70 px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-neon-green">{item.symbol}</p>
+                    <p className="truncate text-xs text-gray-500">
+                      {item.name} · {item.exchange ?? '-'} · {item.type ?? '-'}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href={`https://finance.yahoo.com/quote/${encodeURIComponent(item.symbol)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded border border-neon-cyan/60 px-2 py-1 text-xs text-neon-cyan hover:bg-neon-cyan/10"
+                    >
+                      Yahoo
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => addStockMutation.mutate({ symbol: item.symbol })}
+                      disabled={addStockMutation.isPending || (item.inUniverse && item.active)}
+                      className="rounded border border-neon-green/60 px-2 py-1 text-xs text-neon-green hover:bg-neon-green/10 disabled:opacity-50"
+                    >
+                      {item.inUniverse ? (item.active ? 'In universe' : 'Reactivate') : 'Add universe'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-dark-600 bg-dark-800/90">
