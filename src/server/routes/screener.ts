@@ -15,7 +15,18 @@ const screenerQuerySchema = z.object({
   minVolume: z.coerce.number().min(0).optional(),
   market: z.enum(['US', 'EU', 'ALL']).default('ALL'),
   sortBy: z
-    .enum(['score', 'symbol', 'rsi', 'volume', 'price', 'change'])
+    .enum([
+      'score',
+      'symbol',
+      'name',
+      'market',
+      'rsi',
+      'volume',
+      'price',
+      'change',
+      'aboveSma50',
+      'aboveSma200',
+    ])
     .default('score'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   limit: z.coerce.number().int().min(1).max(100).default(50),
@@ -29,14 +40,18 @@ type RowWithStock = Prisma.StockDataGetPayload<{
   include: { stock: { select: { name: true; market: true } } };
 }>;
 
-function getSortValue(row: RowWithStock, sortBy: string): number | string | null {
+function getSortValue(row: RowWithStock, sortBy: string): number | string | boolean | null {
   switch (sortBy) {
     case 'score': return row.score;
     case 'symbol': return row.symbol;
+    case 'name': return row.stock.name;
+    case 'market': return row.stock.market;
     case 'rsi': return row.rsi14;
     case 'volume': return row.volumeRatio;
     case 'price': return row.close;
     case 'change': return row.changePct;
+    case 'aboveSma50': return row.aboveSma50;
+    case 'aboveSma200': return row.aboveSma200;
     default: return row.score;
   }
 }

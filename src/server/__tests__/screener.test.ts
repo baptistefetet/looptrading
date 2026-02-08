@@ -417,6 +417,28 @@ describe('Screener endpoint', () => {
       const prices = body.data.map((r: { price: number }) => r.price);
       expect(prices).toEqual([153, 405, 790]);
     });
+
+    it('should sort by name asc', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/screener?sortBy=name&sortOrder=asc',
+      });
+
+      const body = JSON.parse(response.body);
+      const names = body.data.map((r: { name: string }) => r.name);
+      expect(names).toEqual(['Apple Inc.', 'LVMH', 'Microsoft Corp.']);
+    });
+
+    it('should sort by aboveSma50 desc', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/screener?sortBy=aboveSma50&sortOrder=desc',
+      });
+
+      const body = JSON.parse(response.body);
+      const symbols = body.data.map((r: { symbol: string }) => r.symbol);
+      expect(symbols[0]).toBe('AAPL');
+    });
   });
 
   // ============================================
