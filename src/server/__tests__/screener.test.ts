@@ -74,23 +74,32 @@ describe('Screener endpoint', () => {
       ],
     });
 
-    // Seed today's data (latest)
+    // Seed today's data (latest) with pre-computed screener fields
     await prisma.stockData.createMany({
       data: [
         {
           symbol: 'AAPL', date: today,
           open: 150, high: 155, low: 149, close: 153, volume: 60000000,
           sma50: 146, sma200: 141, rsi14: 58, avgVol20: 42000000, score: 88,
+          aboveSma50: true, aboveSma200: true,
+          volumeRatio: 60000000 / 42000000, // ~1.43
+          changePct: ((153 - 150) / 150) * 100, // 2.0
         },
         {
           symbol: 'MSFT', date: today,
           open: 400, high: 408, low: 399, close: 405, volume: 35000000,
           sma50: 410, sma200: 382, rsi14: 45, avgVol20: 26000000, score: 62,
+          aboveSma50: false, aboveSma200: true,
+          volumeRatio: 35000000 / 26000000, // ~1.35
+          changePct: ((405 - 400) / 400) * 100, // 1.25
         },
         {
           symbol: 'MC.PA', date: today,
           open: 785, high: 795, low: 780, close: 790, volume: 2500000,
           sma50: 800, sma200: 755, rsi14: 38, avgVol20: 1900000, score: 48,
+          aboveSma50: false, aboveSma200: true,
+          volumeRatio: 2500000 / 1900000, // ~1.32
+          changePct: ((790 - 785) / 785) * 100, // ~0.64
         },
         {
           symbol: 'DEAD', date: today,

@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import type { ScreenerResult } from '../../shared/types.js';
 
@@ -21,122 +22,77 @@ const screenerQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-// Column mappings for ORDER BY (hardcoded, not user-controlled)
-const SORT_COLUMN_MAP: Record<string, string> = {
-  score: 'sd.score',
-  symbol: 'sd.symbol',
-  rsi: 'sd.rsi14',
-  volume: 'vol_ratio',
-  price: 'sd.close',
-  change: 'change_pct',
-};
+type Filters = z.infer<typeof screenerQuerySchema>;
 
-interface RawScreenerRow {
-  symbol: string;
-  name: string;
-  market: string;
-  close: number;
-  prev_close: number | null;
-  score: number | null;
-  rsi14: number | null;
-  sma50: number | null;
-  sma200: number | null;
-  volume: number;
-  avgVol20: number | null;
-  vol_ratio: number | null;
-  change_pct: number | null;
+// Sort key mapping to row accessor
+type RowWithStock = Prisma.StockDataGetPayload<{
+  include: { stock: { select: { name: true; market: true } } };
+}>;
+
+function getSortValue(row: RowWithStock, sortBy: string): number | string | null {
+  switch (sortBy) {
+    case 'score': return row.score;
+    case 'symbol': return row.symbol;
+    case 'rsi': return row.rsi14;
+    case 'volume': return row.volumeRatio;
+    case 'price': return row.close;
+    case 'change': return row.changePct;
+    default: return row.score;
+  }
 }
 
-function buildWhereClause(
-  filters: z.infer<typeof screenerQuerySchema>,
-): { clause: string; params: unknown[] } {
-  const conditions: string[] = ['s.active = 1'];
-  const params: unknown[] = [];
+function buildWhereFilter(filters: Filters): Prisma.StockDataWhereInput {
+  const where: Prisma.StockDataWhereInput = {
+    stock: {
+      active: true,
+      ...(filters.market !== 'ALL' ? { market: filters.market } : {}),
+    },
+  };
 
-  if (filters.market !== 'ALL') {
-    conditions.push('s.market = ?');
-    params.push(filters.market);
-  }
-
-  if (filters.minScore !== undefined) {
-    conditions.push('sd.score >= ?');
-    params.push(filters.minScore);
-  }
-  if (filters.maxScore !== undefined) {
-    conditions.push('sd.score <= ?');
-    params.push(filters.maxScore);
+  // Score filters
+  if (filters.minScore !== undefined || filters.maxScore !== undefined) {
+    where.score = {
+      ...(filters.minScore !== undefined ? { gte: filters.minScore } : {}),
+      ...(filters.maxScore !== undefined ? { lte: filters.maxScore } : {}),
+    };
   }
 
-  if (filters.minRsi !== undefined) {
-    conditions.push('sd.rsi14 >= ?');
-    params.push(filters.minRsi);
-  }
-  if (filters.maxRsi !== undefined) {
-    conditions.push('sd.rsi14 <= ?');
-    params.push(filters.maxRsi);
-  }
-
-  if (filters.aboveSma50 === 'true') {
-    conditions.push('sd.sma50 IS NOT NULL AND sd.close > sd.sma50');
-  } else if (filters.aboveSma50 === 'false') {
-    conditions.push('sd.sma50 IS NOT NULL AND sd.close <= sd.sma50');
+  // RSI filters
+  if (filters.minRsi !== undefined || filters.maxRsi !== undefined) {
+    where.rsi14 = {
+      ...(filters.minRsi !== undefined ? { gte: filters.minRsi } : {}),
+      ...(filters.maxRsi !== undefined ? { lte: filters.maxRsi } : {}),
+    };
   }
 
-  if (filters.aboveSma200 === 'true') {
-    conditions.push('sd.sma200 IS NOT NULL AND sd.close > sd.sma200');
-  } else if (filters.aboveSma200 === 'false') {
-    conditions.push('sd.sma200 IS NOT NULL AND sd.close <= sd.sma200');
+  // aboveSma50/200 - now stored as booleans
+  if (filters.aboveSma50 !== undefined) {
+    where.aboveSma50 = filters.aboveSma50 === 'true';
+  }
+  if (filters.aboveSma200 !== undefined) {
+    where.aboveSma200 = filters.aboveSma200 === 'true';
   }
 
+  // Volume ratio filter
   if (filters.minVolume !== undefined) {
-    conditions.push(
-      'sd.avgVol20 IS NOT NULL AND sd.avgVol20 > 0 AND (sd.volume / sd.avgVol20) >= ?',
-    );
-    params.push(filters.minVolume);
+    where.volumeRatio = { gte: filters.minVolume };
   }
 
-  return { clause: conditions.join(' AND '), params };
+  return where;
 }
 
-const JOINS = `
-  FROM StockData sd
-  JOIN Stock s ON sd.symbol = s.symbol
-  LEFT JOIN StockData prev ON prev.symbol = sd.symbol
-    AND prev.date = (
-      SELECT MAX(sd3.date) FROM StockData sd3
-      WHERE sd3.symbol = sd.symbol AND sd3.date < sd.date
-    )
-  WHERE sd.date = (SELECT MAX(sd2.date) FROM StockData sd2 WHERE sd2.symbol = sd.symbol)
-`;
-
-const JOINS_NO_PREV = `
-  FROM StockData sd
-  JOIN Stock s ON sd.symbol = s.symbol
-  WHERE sd.date = (SELECT MAX(sd2.date) FROM StockData sd2 WHERE sd2.symbol = sd.symbol)
-`;
-
-const COMPUTED_COLUMNS = `
-  CASE WHEN sd.avgVol20 IS NOT NULL AND sd.avgVol20 > 0
-    THEN sd.volume / sd.avgVol20 ELSE NULL END AS vol_ratio,
-  CASE
-    WHEN prev.close IS NOT NULL AND prev.close > 0
-    THEN ((sd.close - prev.close) / prev.close) * 100
-    ELSE 0
-  END AS change_pct
-`;
-
-function mapRowToResult(row: RawScreenerRow): ScreenerResult {
+function mapRowToResult(row: RowWithStock): ScreenerResult {
   return {
     symbol: row.symbol,
-    name: row.name,
-    market: row.market as 'US' | 'EU',
+    name: row.stock.name,
+    market: row.stock.market as 'US' | 'EU',
     price: Math.round(row.close * 100) / 100,
-    change: Math.round((row.change_pct ?? 0) * 100) / 100,
+    change: Math.round((row.changePct ?? 0) * 100) / 100,
     score: row.score,
     rsi: row.rsi14 != null ? Math.round(row.rsi14 * 100) / 100 : null,
-    aboveSma50: row.sma50 != null && row.close > row.sma50,
-    aboveSma200: row.sma200 != null && row.close > row.sma200,
-    volume: row.vol_ratio != null ? Math.round(row.vol_ratio * 100) / 100 : null,
+    aboveSma50: row.aboveSma50 ?? false,
+    aboveSma200: row.aboveSma200 ?? false,
+    volume: row.volumeRatio != null ? Math.round(row.volumeRatio * 100) / 100 : null,
   };
 }
 
@@ -154,44 +110,35 @@ export const screenerRoutes: FastifyPluginAsync = async (fastify) => {
       const filters = request.query;
 
       try {
-        const { clause, params } = buildWhereClause(filters);
+        const where = buildWhereFilter(filters);
 
-        const sortColumn = SORT_COLUMN_MAP[filters.sortBy] ?? 'sd.score';
-        const sortDir = filters.sortOrder === 'asc' ? 'ASC' : 'DESC';
-        // Push NULLs to end regardless of sort direction
-        const nullSort = filters.sortOrder === 'asc'
-          ? `CASE WHEN ${sortColumn} IS NULL THEN 1 ELSE 0 END ASC`
-          : `CASE WHEN ${sortColumn} IS NULL THEN 1 ELSE 0 END ASC`;
+        // Get latest row per symbol using distinct
+        // Prisma distinct + orderBy: date desc = latest row per symbol
+        const allRows = await prisma.stockData.findMany({
+          distinct: ['symbol'],
+          where,
+          orderBy: { date: 'desc' },
+          include: { stock: { select: { name: true, market: true } } },
+        });
 
-        const dataSql = `
-          SELECT
-            sd.symbol, s.name, s.market,
-            sd.close, prev.close AS prev_close,
-            sd.score, sd.rsi14, sd.sma50, sd.sma200,
-            sd.volume, sd.avgVol20,
-            ${COMPUTED_COLUMNS}
-          ${JOINS}
-            AND ${clause}
-          ORDER BY ${nullSort}, ${sortColumn} ${sortDir}
-          LIMIT ? OFFSET ?
-        `;
+        // Sort in memory (orderBy above is for getting latest row, not user sort)
+        const dir = filters.sortOrder === 'asc' ? 1 : -1;
+        allRows.sort((a, b) => {
+          const va = getSortValue(a, filters.sortBy);
+          const vb = getSortValue(b, filters.sortBy);
+          // NULLs always last
+          if (va == null && vb == null) return 0;
+          if (va == null) return 1;
+          if (vb == null) return -1;
+          if (va < vb) return -dir;
+          if (va > vb) return dir;
+          return 0;
+        });
 
-        const countSql = `
-          SELECT COUNT(*) AS total
-          ${JOINS_NO_PREV}
-            AND ${clause}
-        `;
-
-        const dataParams = [...params, filters.limit, filters.offset];
-        const countParams = [...params];
-
-        const [rows, countResult] = await Promise.all([
-          prisma.$queryRawUnsafe<RawScreenerRow[]>(dataSql, ...dataParams),
-          prisma.$queryRawUnsafe<{ total: bigint }[]>(countSql, ...countParams),
-        ]);
-
-        const total = Number(countResult[0]?.total ?? 0);
-        const data = rows.map(mapRowToResult);
+        // Paginate in memory
+        const total = allRows.length;
+        const paginated = allRows.slice(filters.offset, filters.offset + filters.limit);
+        const data = paginated.map(mapRowToResult);
 
         return reply
           .header('X-Total-Count', String(total))

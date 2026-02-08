@@ -54,6 +54,12 @@ model StockData {
   avgVol20  Float?
   score     Int?
 
+  // Pre-computed screener fields
+  aboveSma50  Boolean?
+  aboveSma200 Boolean?
+  volumeRatio Float?
+  changePct   Float?
+
   updatedAt DateTime @updatedAt
   stock     Stock    @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
 

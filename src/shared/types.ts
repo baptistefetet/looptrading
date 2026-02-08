@@ -61,6 +61,12 @@ export interface StockData {
   // Score
   score?: number;
 
+  // Pre-computed screener fields
+  aboveSma50?: boolean;
+  aboveSma200?: boolean;
+  volumeRatio?: number;
+  changePct?: number;
+
   updatedAt: Date;
 }
 

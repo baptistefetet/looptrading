@@ -321,6 +321,7 @@ export class IndicatorService {
       stockData.map((row, i) => {
         const slice = closes.slice(0, i + 1);
         const volSlice = volumes.slice(0, i + 1);
+        const currentClose = closes[i];
 
         const sma20 = i >= 19 ? calculateSMA(slice, 20) : null;
         const sma50 = i >= 49 ? calculateSMA(slice, 50) : null;
@@ -332,6 +333,16 @@ export class IndicatorService {
         const bbResult = i >= 19 ? calculateBollingerBands(slice, 20, 2) : null;
         const obv = obvSeries[i] ?? null;
         const avgVolResult = i >= 19 ? calculateAverageVolume(volSlice, 20) : null;
+
+        // Pre-computed screener fields
+        const aboveSma50 = sma50 != null ? currentClose > sma50 : null;
+        const aboveSma200 = sma200 != null ? currentClose > sma200 : null;
+        const volumeRatio = avgVolResult?.volumeRatio ?? null;
+        const prevClose = i > 0 ? closes[i - 1] : null;
+        const changePct =
+          prevClose != null && prevClose > 0
+            ? ((currentClose - prevClose) / prevClose) * 100
+            : null;
 
         return prisma.stockData.update({
           where: { id: row.id },
@@ -346,6 +357,10 @@ export class IndicatorService {
             bbLower: bbResult?.lower ?? null,
             obv,
             avgVol20: avgVolResult?.avgVolume ?? null,
+            aboveSma50,
+            aboveSma200,
+            volumeRatio,
+            changePct,
           },
         });
       })
@@ -406,7 +421,7 @@ export class IndicatorService {
       bbLower: latest.bbLower,
       obv: latest.obv,
       avgVol20: latest.avgVol20,
-      volumeRatio: null, // volumeRatio is computed on-the-fly, not stored
+      volumeRatio: latest.volumeRatio,
       calculatedAt: latest.updatedAt.toISOString(),
     };
   }
