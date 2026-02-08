@@ -244,17 +244,6 @@ export interface StockHistory {
 }
 
 // ============================================
-// Universe Import
-// ============================================
-export interface UniverseImportResult {
-  created: number;
-  reactivated: number;
-  skipped: number;
-  errors: Array<{ symbol: string; error: string }>;
-  total: number;
-}
-
-// ============================================
 // Screener
 // ============================================
 export interface ScreenerResult {
