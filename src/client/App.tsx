@@ -9,6 +9,9 @@ const Dashboard = lazy(() =>
 const Screener = lazy(() =>
   import('./pages/Screener').then((module) => ({ default: module.Screener })),
 );
+const Universe = lazy(() =>
+  import('./pages/Universe').then((module) => ({ default: module.Universe })),
+);
 const Watchlist = lazy(() =>
   import('./pages/Watchlist').then((module) => ({ default: module.Watchlist })),
 );
@@ -38,6 +41,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/screener" element={<Screener />} />
+          <Route path="/universe" element={<Universe />} />
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/settings" element={<Settings />} />

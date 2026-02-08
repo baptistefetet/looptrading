@@ -8,6 +8,7 @@ interface SidebarProps {
 const navItems = [
   { path: '/', label: 'Dashboard', icon: DashboardIcon },
   { path: '/screener', label: 'Screener', icon: ScreenerIcon },
+  { path: '/universe', label: 'Universe', icon: UniverseIcon },
   { path: '/watchlist', label: 'Watchlist', icon: WatchlistIcon },
   { path: '/portfolio', label: 'Portfolio', icon: PortfolioIcon },
   { path: '/settings', label: 'Settings', icon: SettingsIcon },
@@ -119,6 +120,30 @@ function WatchlistIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+      />
+    </svg>
+  );
+}
+
+function UniverseIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 12h18M12 3c3.866 0 7 4.03 7 9s-3.134 9-7 9-7-4.03-7-9 3.134-9 7-9z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 3c-2.5 2.2-4 5.4-4 9s1.5 6.8 4 9m0-18c2.5 2.2 4 5.4 4 9s-1.5 6.8-4 9"
       />
     </svg>
   );
