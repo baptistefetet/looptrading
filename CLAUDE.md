@@ -59,7 +59,7 @@ looptrading/
 | Epic 2: Portfolio & News | 2 | 2.1, 2.3 |
 | Epic 3: Market Data | 4 | 3.1 → 3.4 |
 | Epic 4: Scoring & Screening | 3 | 4.1 → 4.3 |
-| Epic 5: Alerts | 4 | 5.1 → 5.4 |
+| Epic 5: Alerts | 3 | 5.1 → 5.3 |
 | Epic 6: Dashboard & UI | 6 | 6.1 → 6.6 |
 
 ## Critical Constraints

@@ -137,8 +137,6 @@ export interface UserSettings {
   minScoreAlert: number;
 
   // Notifications
-  emailEnabled: boolean;
-  emailAddress?: string;
   pushEnabled: boolean;
 
   // Quiet hours

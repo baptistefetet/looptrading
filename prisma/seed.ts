@@ -100,7 +100,6 @@ async function main() {
       strategyBreakout: true,
       strategyMacdCross: true,
       minScoreAlert: 75,
-      emailEnabled: false,
       pushEnabled: true,
       quietHoursEnabled: false,
     },

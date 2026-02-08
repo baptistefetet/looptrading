@@ -109,7 +109,7 @@ Les traders individuels font face à plusieurs défis :
 |----------------|-------------|----------|
 | **Screener d'actions** | Filtrage par critères techniques (RSI, MACD, moyennes mobiles, volume) sur marchés US/EU | P0 |
 | **Graphiques interactifs** | Chandeliers japonais avec indicateurs techniques superposables | P0 |
-| **Système d'alertes** | Notifications (email/push) quand critères d'achat réunis | P0 |
+| **Système d'alertes** | Notifications push quand critères d'achat réunis | P0 |
 | **Agrégateur de news** | Flux RSS/API des principales sources financières | P0 |
 | **Connexion IBKR** | Récupération portefeuille, passage d'ordres | P0 |
 | **Dashboard principal** | Vue d'ensemble : alertes, positions, P&L, watchlist | P0 |

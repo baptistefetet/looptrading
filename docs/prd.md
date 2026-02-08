@@ -35,7 +35,7 @@ Looptrading résout ce problème en centralisant screening intelligent, analyse 
 | **FR1** | Le système doit permettre de filtrer les actions US et EU selon des critères techniques configurables (RSI, MACD, SMA, EMA, Bollinger Bands, volume) |
 | **FR2** | Le système doit afficher des graphiques en chandeliers japonais interactifs avec superposition d'indicateurs techniques |
 | **FR3** | Le système doit calculer un score composite (0-100) pour chaque action basé sur : tendance LT (25%), tendance MT (20%), momentum (20%), volume (15%), sentiment (10%), proximité support (10%) |
-| **FR4** | Le système doit envoyer des alertes (email et/ou notification push) lorsqu'une action atteint un score > 75 ou correspond aux stratégies configurées |
+| **FR4** | Le système doit envoyer des alertes (notification push) lorsqu'une action atteint un score > 75 ou correspond aux stratégies configurées |
 | **FR5** | Le système doit supporter trois stratégies d'alerte : Pullback sur tendance haussière, Breakout avec volume, Croisement MACD |
 | **FR6** | Le système doit afficher les news financières (Yahoo Finance) et les associer aux actions surveillées |
 | **FR7** | Le système doit afficher un dashboard principal avec : alertes actives, watchlist, score des opportunités, résumé portefeuille |
@@ -189,7 +189,7 @@ looptrading/
 | **Epic 2** | Portfolio & News | Gestion manuelle du portfolio et news Yahoo Finance |
 | **Epic 3** | Market Data & Technical Indicators | Récupérer les données de marché et calculer tous les indicateurs techniques |
 | **Epic 4** | Scoring & Screening | Implémenter le score composite et le screener filtrable |
-| **Epic 5** | Alerts & Notifications | Système d'alertes avec stratégies configurables et notifications email/push |
+| **Epic 5** | Alerts & Notifications | Système d'alertes avec stratégies configurables et notifications push |
 | **Epic 6** | Dashboard & Visualization | Interface complète : dashboard, graphiques interactifs, watchlist, détail action |
 
 ---
@@ -433,7 +433,7 @@ looptrading/
 
 ### Epic 5: Alerts & Notifications
 
-**Objectif** : Créer le système d'alertes basé sur les stratégies définies, avec notifications email et/ou push.
+**Objectif** : Créer le système d'alertes basé sur les stratégies définies, avec notifications push.
 
 #### Story 5.1: Moteur d'alertes et stratégies
 
@@ -451,20 +451,7 @@ looptrading/
 4. Job cron évaluant les règles toutes les 15 minutes
 5. Déduplication : pas d'alerte répétée dans les 24h
 
-#### Story 5.2: Notifications email
-
-> As a user,
-> I want email notifications for alerts,
-> so that I'm informed even when not using the app.
-
-**Acceptance Criteria:**
-1. Service `NotificationService` avec provider email (Nodemailer/SMTP)
-2. Template email HTML avec détails de l'alerte
-3. Configuration SMTP via variables d'environnement
-4. Option enable/disable par utilisateur
-5. Logs des emails envoyés
-
-#### Story 5.3: Notifications push navigateur
+#### Story 5.2: Notifications push navigateur
 
 > As a user,
 > I want browser push notifications,
@@ -477,7 +464,7 @@ looptrading/
 4. Clic sur notification → page détail de l'action
 5. Option enable/disable dans settings
 
-#### Story 5.4: Configuration des alertes
+#### Story 5.3: Configuration des alertes
 
 > As a user,
 > I want to configure my alert preferences,
@@ -487,9 +474,8 @@ looptrading/
 1. Page Settings > Alerts dans le frontend
 2. Toggle par stratégie (enable/disable)
 3. Seuil de score minimum pour alerte
-4. Choix canaux : email, push, les deux
-5. Horaires silencieux (optionnel)
-6. Sauvegarde via API `PUT /api/settings/alerts`
+4. Horaires silencieux (optionnel)
+5. Sauvegarde via API `PUT /api/settings/alerts`
 
 ---
 

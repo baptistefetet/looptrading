@@ -230,8 +230,6 @@ interface UserSettings {
   minScoreAlert: number;
 
   // Notifications
-  emailEnabled: boolean;
-  emailAddress?: string;
   pushEnabled: boolean;
 
   // Quiet hours
@@ -603,8 +601,6 @@ model UserSettings {
   strategyBreakout   Boolean @default(true)
   strategyMacdCross  Boolean @default(true)
   minScoreAlert      Int     @default(75)
-  emailEnabled       Boolean @default(false)
-  emailAddress       String?
   pushEnabled        Boolean @default(true)
   quietHoursEnabled  Boolean @default(false)
   quietHoursStart    String?
