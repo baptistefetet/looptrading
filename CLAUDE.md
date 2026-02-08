@@ -12,7 +12,7 @@
 | 2. PRD | `docs/prd.md` | Done |
 | 3. Architecture | `docs/architecture.md` | Done (v3.0 - simplified) |
 | 4. Stories | `docs/stories/` | Done (25 stories, updated for v3.0) |
-| 5. Implementation | - | **In Progress** (Stories 1.1–1.5, 2.1, 2.3, 3.1–3.4, 4.1–4.3 done) |
+| 5. Implementation | - | **In Progress** (Stories 1.1–1.5, 2.1, 2.3, 3.1–3.4, 4.1–4.3, 5.1–5.3 done) |
 
 ## Architecture v3.0 - Simplification Maximale
 
@@ -90,7 +90,10 @@ looptrading/
 17. ~~Story 4.1: Composite Score~~ - Done
 18. ~~Story 4.2: Screener API~~ - Done
 19. ~~Story 4.3: Universe Management~~ - Done
-20. **Next:** Story 5.1
+20. ~~Story 5.1: Alert Engine~~ - Done
+21. ~~Story 5.2: Push Notifications~~ - Done
+22. ~~Story 5.3: Alert Configuration~~ - Done
+23. **Next:** Story 6.1
 
 ## Commands
 
