@@ -59,6 +59,7 @@ model StockData {
 
   @@unique([symbol, date])
   @@index([symbol, date])
+  @@index([score])
 }
 
 model Position {

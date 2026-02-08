@@ -238,8 +238,21 @@ export interface StockHistory {
 }
 
 // ============================================
-// Screener Filters
+// Screener
 // ============================================
+export interface ScreenerResult {
+  symbol: string;
+  name: string;
+  market: Market;
+  price: number;
+  change: number;
+  score: number | null;
+  rsi: number | null;
+  aboveSma50: boolean;
+  aboveSma200: boolean;
+  volume: number | null;
+}
+
 export interface ScreenerFilters {
   minScore?: number;
   maxScore?: number;
