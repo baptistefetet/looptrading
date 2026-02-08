@@ -24,8 +24,6 @@ interface ScreenerTableProps {
   onPageIndexChange: (next: number) => void;
   onPageSizeChange: (next: number) => void;
   onRowClick: (symbol: string) => void;
-  onExportCsv: () => void;
-  isExporting: boolean;
 }
 
 function numberOrDash(value: number | null, digits: number = 2): string {
@@ -54,8 +52,6 @@ export function ScreenerTable({
   onPageIndexChange,
   onPageSizeChange,
   onRowClick,
-  onExportCsv,
-  isExporting,
 }: ScreenerTableProps) {
   const columns = useMemo<ColumnDef<ScreenerRow>[]>(
     () => [
@@ -157,14 +153,6 @@ export function ScreenerTable({
             {total} results {isFetching ? '· updating...' : ''}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onExportCsv}
-          disabled={isExporting || total === 0}
-          className="rounded border border-neon-cyan/50 px-3 py-1.5 text-xs font-medium text-neon-cyan transition hover:bg-neon-cyan/10 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isExporting ? 'Exporting...' : 'Export CSV'}
-        </button>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">

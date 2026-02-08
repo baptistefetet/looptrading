@@ -12,7 +12,7 @@
 | 2. PRD | `docs/prd.md` | Done |
 | 3. Architecture | `docs/architecture.md` | Done (v3.0 - simplified) |
 | 4. Stories | `docs/stories/` | Done (25 stories, updated for v3.0) |
-| 5. Implementation | - | **In Progress** (Stories 1.1–1.5, 2.1, 2.3, 3.1–3.4, 4.1–4.3, 5.1–5.3 done) |
+| 5. Implementation | - | **In Progress** (Stories 6.1–6.6 implémentées, global status majoritairement "Ready for Review") |
 
 ## Architecture v3.0 - Simplification Maximale
 
@@ -93,7 +93,13 @@ looptrading/
 20. ~~Story 5.1: Alert Engine~~ - Done
 21. ~~Story 5.2: Push Notifications~~ - Done
 22. ~~Story 5.3: Alert Configuration~~ - Done
-23. **Next:** Story 6.1
+23. ~~Story 6.1: Dashboard~~ - Ready for Review
+24. ~~Story 6.2: Interactive Charts~~ - Ready for Review
+25. ~~Story 6.3: Screener Page~~ - Ready for Review (CSV export retiré)
+26. ~~Story 6.4: Watchlist Page~~ - Ready for Review
+27. ~~Story 6.5: Stock Detail Page~~ - Ready for Review
+28. ~~Story 6.6: Portfolio Page~~ - Ready for Review
+29. **Next:** Passer les stories "Ready for Review" en "Done" après revue PO/QA
 
 ## Commands
 
@@ -130,7 +136,7 @@ pnpm db:reset     # Reset database (warning: deletes all data)
 ## Workflow
 
 **A la fin de chaque story:**
-1. Mettre à jour le status de la story (`Done`) et cocher les tasks
+1. Mettre à jour le status de la story (`Ready for Review` puis `Done`) et cocher les tasks
 2. Mettre à jour `CLAUDE.md` (Next Steps)
 3. Commit avec message descriptif
 4. **Push sur GitHub** (`git push origin main`)

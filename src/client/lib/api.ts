@@ -13,10 +13,23 @@ async function request<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `HTTP error ${response.status}`);
+    const message =
+      error?.message ??
+      error?.error?.message ??
+      `HTTP error ${response.status}`;
+    throw new Error(message);
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const contentType = response.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+
+  return undefined as T;
 }
 
 export const api = {

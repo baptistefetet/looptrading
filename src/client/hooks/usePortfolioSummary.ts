@@ -6,6 +6,8 @@ export interface PortfolioPosition {
   symbol: string;
   quantity: number;
   avgCost: number;
+  dateAcquired?: string;
+  notes?: string;
   currentPrice: number;
   marketValue: number;
   unrealizedPnL: number;

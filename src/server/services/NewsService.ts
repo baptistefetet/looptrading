@@ -9,6 +9,7 @@ export interface NewsItem {
   link: string;
   publisher: string;
   publishedAt: string;
+  summary?: string;
   thumbnail?: string;
 }
 
@@ -26,15 +27,23 @@ export class NewsService {
 
     const news: NewsItem[] = (result.news ?? [])
       .filter((item) => item.title && item.link)
-      .map((item) => ({
+      .map((item) => {
+        const summary =
+          typeof (item as { summary?: unknown }).summary === 'string'
+            ? ((item as { summary?: string }).summary as string)
+            : undefined;
+
+        return {
         title: item.title,
         link: item.link,
         publisher: item.publisher ?? 'Unknown',
         publishedAt: item.providerPublishTime
           ? new Date(item.providerPublishTime).toISOString()
           : new Date().toISOString(),
+        summary,
         thumbnail: item.thumbnail?.resolutions?.[0]?.url,
-      }))
+        };
+      })
       .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     cacheService.set(cacheKey, news, NEWS_CACHE_TTL);

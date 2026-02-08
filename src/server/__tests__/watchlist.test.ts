@@ -156,4 +156,115 @@ describe('Watchlist endpoint', () => {
     expect(body.data).toEqual([]);
     expect(body.meta.total).toBe(0);
   });
+
+  it('creates and deletes a watchlist item', async () => {
+    await prisma.stock.create({
+      data: {
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        market: 'US',
+        active: true,
+      },
+    });
+
+    const createResponse = await app.inject({
+      method: 'POST',
+      url: '/api/watchlist',
+      payload: {
+        symbol: 'aapl',
+        targetPriceHigh: 220,
+        targetPriceLow: 180,
+        notes: 'Momentum setup',
+      },
+    });
+
+    expect(createResponse.statusCode).toBe(201);
+    const createBody = JSON.parse(createResponse.body);
+    expect(createBody.data.symbol).toBe('AAPL');
+    expect(createBody.data.targetPriceHigh).toBe(220);
+    expect(createBody.data.targetPriceLow).toBe(180);
+
+    const deleteResponse = await app.inject({
+      method: 'DELETE',
+      url: `/api/watchlist/${createBody.data.id}`,
+    });
+
+    expect(deleteResponse.statusCode).toBe(204);
+    const count = await prisma.watchlistItem.count();
+    expect(count).toBe(0);
+  });
+
+  it('updates watchlist alert levels', async () => {
+    await prisma.stock.create({
+      data: {
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        market: 'US',
+        active: true,
+      },
+    });
+
+    const item = await prisma.watchlistItem.create({
+      data: {
+        symbol: 'AAPL',
+        order: 0,
+      },
+    });
+
+    const response = await app.inject({
+      method: 'PUT',
+      url: `/api/watchlist/${item.id}/alert`,
+      payload: {
+        targetPriceHigh: 230,
+        targetPriceLow: 190,
+        notes: 'Breakout watch',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body);
+    expect(body.data.targetPriceHigh).toBe(230);
+    expect(body.data.targetPriceLow).toBe(190);
+    expect(body.data.notes).toBe('Breakout watch');
+  });
+
+  it('reorders watchlist items', async () => {
+    await prisma.stock.createMany({
+      data: [
+        { symbol: 'AAPL', name: 'Apple Inc.', market: 'US', active: true },
+        { symbol: 'MSFT', name: 'Microsoft Corp.', market: 'US', active: true },
+      ],
+    });
+
+    const first = await prisma.watchlistItem.create({
+      data: {
+        symbol: 'AAPL',
+        order: 0,
+      },
+    });
+    const second = await prisma.watchlistItem.create({
+      data: {
+        symbol: 'MSFT',
+        order: 1,
+      },
+    });
+
+    const reorderResponse = await app.inject({
+      method: 'PUT',
+      url: '/api/watchlist/reorder',
+      payload: {
+        ids: [second.id, first.id],
+      },
+    });
+
+    expect(reorderResponse.statusCode).toBe(200);
+
+    const listResponse = await app.inject({
+      method: 'GET',
+      url: '/api/watchlist',
+    });
+    const listBody = JSON.parse(listResponse.body);
+    expect(listBody.data[0].symbol).toBe('MSFT');
+    expect(listBody.data[1].symbol).toBe('AAPL');
+  });
 });

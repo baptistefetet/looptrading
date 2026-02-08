@@ -196,6 +196,7 @@ export interface NewsItem {
   link: string;
   publisher: string;
   publishedAt: string;
+  summary?: string;
   thumbnail?: string;
 }
 

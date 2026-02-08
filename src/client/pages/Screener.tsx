@@ -1,59 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { functionalUpdate, type OnChangeFn, type SortingState } from '@tanstack/react-table';
-import { api } from '../lib/api';
 import { ScreenerTable } from '../components/ScreenerTable';
 import {
   DEFAULT_SCREENER_FILTERS,
-  buildScreenerSearchParams,
   useScreener,
   type ScreenerFiltersState,
-  type ScreenerResponse,
   type ScreenerSortBy,
 } from '../hooks/useScreener';
-
-function buildCsv(rows: ScreenerResponse['data']): string {
-  const headers = [
-    'Symbol',
-    'Name',
-    'Price',
-    'ChangePct',
-    'Score',
-    'RSI',
-    'AboveSMA50',
-    'AboveSMA200',
-    'VolumeRatio',
-    'Market',
-  ];
-
-  const escape = (value: unknown): string => {
-    if (value == null) return '';
-    const stringValue = String(value);
-    if (/[",\n]/.test(stringValue)) {
-      return `"${stringValue.replace(/"/g, '""')}"`;
-    }
-    return stringValue;
-  };
-
-  const lines = rows.map((row) =>
-    [
-      row.symbol,
-      row.name,
-      row.price.toFixed(2),
-      row.change.toFixed(2),
-      row.score ?? '',
-      row.rsi ?? '',
-      row.aboveSma50,
-      row.aboveSma200,
-      row.volume ?? '',
-      row.market,
-    ]
-      .map(escape)
-      .join(','),
-  );
-
-  return [headers.join(','), ...lines].join('\n');
-}
 
 export function Screener() {
   const navigate = useNavigate();
@@ -62,7 +16,6 @@ export function Screener() {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'score', desc: true }]);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(50);
-  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -112,50 +65,6 @@ export function Screener() {
     setPageIndex(0);
   };
 
-  const exportCsv = async () => {
-    if (isExporting) return;
-    setIsExporting(true);
-
-    try {
-      const allRows: ScreenerResponse['data'] = [];
-      const chunkSize = 100;
-      let offset = 0;
-      let totalCount = 0;
-
-      do {
-        const params = buildScreenerSearchParams({
-          filters: debouncedFilters,
-          sortBy,
-          sortOrder,
-          pageIndex: 0,
-          pageSize: chunkSize,
-        });
-        params.set('offset', String(offset));
-
-        const response = await api.get<ScreenerResponse>(`/screener?${params.toString()}`);
-        allRows.push(...response.data);
-        totalCount = response.meta.total;
-        offset += chunkSize;
-
-        if (response.data.length === 0) break;
-      } while (offset < totalCount);
-
-      const csvContent = buildCsv(allRows);
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      const timestamp = new Date().toISOString().replace(/[:]/g, '-').slice(0, 19);
-      link.href = url;
-      link.download = `screener-${timestamp}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   const summaryLabel = useMemo(() => {
     if (total === 0) return 'No matching opportunities right now.';
 
@@ -186,8 +95,6 @@ export function Screener() {
         onPageIndexChange={setPageIndex}
         onPageSizeChange={handlePageSizeChange}
         onRowClick={(symbol) => navigate(`/stocks/${encodeURIComponent(symbol)}`)}
-        onExportCsv={exportCsv}
-        isExporting={isExporting}
       />
     </div>
   );
