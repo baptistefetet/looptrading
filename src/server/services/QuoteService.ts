@@ -1,4 +1,4 @@
-import yahooFinance from 'yahoo-finance2';
+import yahooFinance from '../lib/yahooFinance.js';
 import { cacheService } from './CacheService.js';
 
 const QUOTE_CACHE_TTL = 60; // 60 seconds

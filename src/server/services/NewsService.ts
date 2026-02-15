@@ -1,4 +1,4 @@
-import yahooFinance from 'yahoo-finance2';
+import yahooFinance from '../lib/yahooFinance.js';
 import { cacheService } from './CacheService.js';
 
 const NEWS_CACHE_TTL = 900; // 15 minutes
@@ -23,28 +23,31 @@ export class NewsService {
     const cached = cacheService.get<NewsItem[]>(cacheKey);
     if (cached) return cached.slice(0, limit);
 
-    const result = await yahooFinance.search(symbol, { newsCount: DEFAULT_NEWS_LIMIT });
+    const result: any = await yahooFinance.search(symbol, { newsCount: DEFAULT_NEWS_LIMIT });
 
     const news: NewsItem[] = (result.news ?? [])
-      .filter((item) => item.title && item.link)
-      .map((item) => {
+      .filter((item: any) => item.title && item.link)
+      .map((item: any) => {
         const summary =
           typeof (item as { summary?: unknown }).summary === 'string'
             ? ((item as { summary?: string }).summary as string)
             : undefined;
 
         return {
-        title: item.title,
-        link: item.link,
-        publisher: item.publisher ?? 'Unknown',
-        publishedAt: item.providerPublishTime
-          ? new Date(item.providerPublishTime).toISOString()
-          : new Date().toISOString(),
-        summary,
-        thumbnail: item.thumbnail?.resolutions?.[0]?.url,
+          title: item.title,
+          link: item.link,
+          publisher: item.publisher ?? 'Unknown',
+          publishedAt: item.providerPublishTime
+            ? new Date(item.providerPublishTime).toISOString()
+            : new Date().toISOString(),
+          summary,
+          thumbnail: item.thumbnail?.resolutions?.[0]?.url,
         };
       })
-      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      .sort(
+        (a: NewsItem, b: NewsItem) =>
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+      );
 
     cacheService.set(cacheKey, news, NEWS_CACHE_TTL);
     return news.slice(0, limit);

@@ -1,4 +1,4 @@
-import yahooFinance from 'yahoo-finance2';
+import yahooFinance from '../lib/yahooFinance.js';
 import { cacheService } from './CacheService.js';
 
 const QUOTE_CACHE_TTL = 900; // 15 minutes (NFR3)
@@ -179,7 +179,7 @@ export class MarketDataService {
     const cached = cacheService.get<StockQuote>(cacheKey);
     if (cached) return cached;
 
-    const result = await this.fetchWithRetry(() => yahooFinance.quote(upperSymbol));
+    const result = await this.fetchWithRetry<any>(() => yahooFinance.quote(upperSymbol));
 
     const quote: StockQuote = {
       symbol: upperSymbol,
@@ -216,7 +216,7 @@ export class MarketDataService {
     const now = new Date();
     const period1 = this.computePeriod1(now, config.period1);
 
-    const result = await this.fetchWithRetry(() =>
+    const result = await this.fetchWithRetry<any[]>(() =>
       yahooFinance.historical(upperSymbol, {
         period1,
         period2: now,
@@ -224,7 +224,7 @@ export class MarketDataService {
       })
     );
 
-    const bars: OHLCVBar[] = result.map((bar) => ({
+    const bars: OHLCVBar[] = result.map((bar: any) => ({
       date: bar.date.toISOString().split('T')[0],
       open: bar.open ?? 0,
       high: bar.high ?? 0,

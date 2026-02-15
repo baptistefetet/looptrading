@@ -2,11 +2,76 @@ import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { prisma } from '../lib/prisma.js';
+import yahooFinance from '../lib/yahooFinance.js';
 import { marketDataService } from '../services/MarketDataService.js';
 import { quoteService } from '../services/QuoteService.js';
-import yahooFinance from 'yahoo-finance2';
 
 const MAX_ACTIVE_STOCKS = 500;
+const YAHOO_SEARCH_TIMEOUT_MS = 5000;
+
+type YahooSearchItem = {
+  symbol: string;
+  name: string;
+  exchange: string | null;
+  type: string | null;
+};
+
+type YahooSearchApiResponse = {
+  quotes?: Array<{
+    symbol?: unknown;
+    shortname?: unknown;
+    longname?: unknown;
+    exchange?: unknown;
+    quoteType?: unknown;
+  }>;
+};
+
+function normalizeYahooQuotes(rawQuotes: YahooSearchApiResponse['quotes']): YahooSearchItem[] {
+  return (rawQuotes ?? [])
+    .map((quote) => ({
+      symbol:
+        typeof quote.symbol === 'string'
+          ? quote.symbol.toUpperCase().trim()
+          : '',
+      name:
+        typeof quote.shortname === 'string'
+          ? quote.shortname
+          : typeof quote.longname === 'string'
+            ? quote.longname
+            : '',
+      exchange:
+        typeof quote.exchange === 'string'
+          ? quote.exchange
+          : null,
+      type:
+        typeof quote.quoteType === 'string'
+          ? quote.quoteType
+          : null,
+    }))
+    .filter((quote) => quote.symbol.length > 0);
+}
+
+async function searchYahooDirect(query: string, limit: number): Promise<YahooSearchItem[]> {
+  const url = new URL('https://query2.finance.yahoo.com/v1/finance/search');
+  url.searchParams.set('q', query);
+  url.searchParams.set('quotesCount', String(limit));
+  url.searchParams.set('newsCount', '0');
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'Mozilla/5.0',
+    },
+    signal: AbortSignal.timeout(YAHOO_SEARCH_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Yahoo direct search failed: HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as YahooSearchApiResponse;
+  return normalizeYahooQuotes(payload.quotes);
+}
 
 // ============================================
 // Zod Schemas
@@ -99,96 +164,92 @@ export const universeRoutes: FastifyPluginAsync = async (fastify) => {
         });
       };
 
+      let yahooItems: YahooSearchItem[] = [];
+
       try {
         const result = await yahooFinance.search(query, {
           quotesCount: limit,
           newsCount: 0,
         });
+        yahooItems = normalizeYahooQuotes(result.quotes as YahooSearchApiResponse['quotes']);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        request.log.warn(
+          { q: query, error: message },
+          'yahoo-finance2 search failed, trying direct Yahoo endpoint',
+        );
+      }
 
-        const items = (result.quotes ?? [])
-          .map((quote) => ({
-            symbol:
-              typeof (quote as { symbol?: unknown }).symbol === 'string'
-                ? ((quote as { symbol: string }).symbol || '').toUpperCase().trim()
-                : '',
-            name:
-              (quote as { shortname?: string; longname?: string }).shortname ??
-              (quote as { shortname?: string; longname?: string }).longname ??
-              '',
-            exchange:
-              typeof (quote as { exchange?: unknown }).exchange === 'string'
-                ? (quote as { exchange: string }).exchange
-                : null,
-            type:
-              typeof (quote as { quoteType?: unknown }).quoteType === 'string'
-                ? (quote as { quoteType: string }).quoteType
-                : null,
-          }))
-          .filter((quote) => quote.symbol.length > 0);
+      if (yahooItems.length === 0) {
+        try {
+          yahooItems = await searchYahooDirect(query, limit);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          request.log.warn({ q: query, error: message }, 'Yahoo direct search failed, using fallback');
+        }
+      }
+
+      if (yahooItems.length > 0) {
         const data = await buildResultWithUniverseFlags(
-          items.map((item) => ({
+          yahooItems.map((item) => ({
             ...item,
             market: item.symbol.includes('.') ? 'EU' : 'US',
           })),
         );
-
-        return reply.send({ data });
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        request.log.warn({ q: query, error: message }, 'Yahoo symbol search failed, using fallback');
-
-        const localStocks = await prisma.stock.findMany({
-          where: {
-            OR: [
-              { symbol: { contains: normalizedQuery } },
-              { name: { contains: query } },
-            ],
-          },
-          orderBy: { symbol: 'asc' },
-          take: limit,
-          select: {
-            symbol: true,
-            name: true,
-            market: true,
-            active: true,
-          },
-        });
-
-        const fallbackItems: Array<{
-          symbol: string;
-          name: string;
-          market: 'US' | 'EU';
-          exchange: string | null;
-          type: string | null;
-        }> = localStocks.map((stock) => ({
-          symbol: stock.symbol,
-          name: stock.name,
-          market: stock.market === 'EU' ? 'EU' : 'US',
-          exchange: null,
-          type: 'EQUITY',
-        }));
-
-        const tickerLike = /^[A-Z0-9.\-]{1,20}$/.test(normalizedQuery);
-        if (tickerLike) {
-          try {
-            const quote = await marketDataService.getQuote(normalizedQuery);
-            if (!fallbackItems.some((item) => item.symbol === quote.symbol)) {
-              fallbackItems.unshift({
-                symbol: quote.symbol,
-                name: quote.name || quote.symbol,
-                market: quote.symbol.includes('.') ? 'EU' : 'US',
-                exchange: quote.exchange || null,
-                type: 'EQUITY',
-              });
-            }
-          } catch {
-            // Ignore direct quote fallback errors
-          }
-        }
-
-        const data = await buildResultWithUniverseFlags(fallbackItems.slice(0, limit));
         return reply.send({ data });
       }
+
+      const localStocks = await prisma.stock.findMany({
+        where: {
+          OR: [
+            { symbol: { contains: normalizedQuery } },
+            { name: { contains: query } },
+          ],
+        },
+        orderBy: { symbol: 'asc' },
+        take: limit,
+        select: {
+          symbol: true,
+          name: true,
+          market: true,
+          active: true,
+        },
+      });
+
+      const fallbackItems: Array<{
+        symbol: string;
+        name: string;
+        market: 'US' | 'EU';
+        exchange: string | null;
+        type: string | null;
+      }> = localStocks.map((stock) => ({
+        symbol: stock.symbol,
+        name: stock.name,
+        market: stock.market === 'EU' ? 'EU' : 'US',
+        exchange: null,
+        type: 'EQUITY',
+      }));
+
+      const tickerLike = /^[A-Z0-9.\-]{1,20}$/.test(normalizedQuery);
+      if (tickerLike) {
+        try {
+          const quote = await marketDataService.getQuote(normalizedQuery);
+          if (!fallbackItems.some((item) => item.symbol === quote.symbol)) {
+            fallbackItems.unshift({
+              symbol: quote.symbol,
+              name: quote.name || quote.symbol,
+              market: quote.symbol.includes('.') ? 'EU' : 'US',
+              exchange: quote.exchange || null,
+              type: 'EQUITY',
+            });
+          }
+        } catch {
+          // Ignore direct quote fallback errors
+        }
+      }
+
+      const data = await buildResultWithUniverseFlags(fallbackItems.slice(0, limit));
+      return reply.send({ data });
     },
   );
 
@@ -216,7 +277,7 @@ export const universeRoutes: FastifyPluginAsync = async (fastify) => {
       if (search) {
         where.OR = [
           { symbol: { contains: search.toUpperCase() } },
-          { name: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search } },
         ];
       }
 
