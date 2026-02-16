@@ -104,16 +104,16 @@ looptrading/
 ## Commands
 
 ```bash
-pnpm dev       # Watch mode (rebuild client + restart server on changes)
-pnpm build     # Build client + server → dist/
-pnpm start     # Start server (port 3000)
-pnpm test      # Vitest
+npm run dev       # Watch mode (rebuild client + restart server on changes)
+npm run build     # Build client + server → dist/
+npm start         # Start server (port 3000)
+npm test          # Vitest
 
 # Database
-pnpm db:generate  # Generate Prisma client
-pnpm db:migrate   # Run migrations
-pnpm db:seed      # Seed database
-pnpm db:reset     # Reset database (warning: deletes all data)
+npm run db:generate  # Generate Prisma client
+npm run db:migrate   # Run migrations
+npm run db:seed      # Seed database
+npm run db:reset     # Reset database (warning: deletes all data)
 ```
 
 ## Key Files
